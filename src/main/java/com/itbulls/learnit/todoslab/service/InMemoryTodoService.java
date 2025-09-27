@@ -9,39 +9,51 @@ import org.springframework.stereotype.Service;
 import com.itbulls.learnit.todoslab.model.Todo;
 
 
+/**
+ * Simple in-memory implementation.
+ * Thread-safe enough for lab purposes.
+ */
 @Service
 public class InMemoryTodoService implements TodoService {
 
-    // TODO: create in-memory store (e.g., Map<Long, Todo>)
-    // TODO: create id generator (e.g., AtomicLong)
+    private final Map<Long, Todo> store = new ConcurrentHashMap<>();
+    private final AtomicLong idSeq = new AtomicLong(0);
 
     @Override
     public Todo create(String title) {
-        // TODO: implement creation logic
-        return null;
+        // TODO: validate title (non-null, non-blank) if desired
+        long id = idSeq.incrementAndGet();
+        Todo todo = new Todo(id, title, false);
+        store.put(id, todo);
+        return todo;
     }
 
     @Override
     public List<Todo> findAll() {
-        // TODO: return all todos
-        return Collections.emptyList();
+        return new ArrayList<>(store.values());
     }
 
     @Override
     public Optional<Todo> findById(Long id) {
-        // TODO: return todo by id
-        return Optional.empty();
+        return Optional.ofNullable(store.get(id));
     }
 
     @Override
     public Optional<Todo> update(Long id, String title, Boolean done) {
-        // TODO: update todo if exists
-        return Optional.empty();
+        Todo existing = store.get(id);
+        if (existing == null) return Optional.empty();
+
+        if (title != null && !title.isBlank()) {
+            existing.setTitle(title);
+        }
+        if (done != null) {
+            existing.setDone(done);
+        }
+        return Optional.of(existing);
     }
 
     @Override
     public boolean delete(Long id) {
-        // TODO: delete todo by id
-        return false;
+        return store.remove(id) != null;
     }
 }
